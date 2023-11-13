@@ -28,16 +28,22 @@ rust-oci-tests-bin:
 
 # Tests
 
-# run oci tests
-test-oci: oci-tests rust-oci-tests
+# run integration tests
+test-integration: test-oci rust-oci-tests
 
 # run all tests except rust-oci 
-test-all: unittest test-features oci-tests containerd-test # currently not doing rust-oci here
+test-all: test-basic test-features test-oci containerd-test # currently not doing rust-oci here
 
-# run cargo unittests
-unittest:
-    cd ./crates
-    LD_LIBRARY_PATH=${HOME}/.wasmedge/lib cargo test --all --all-targets --all-features
+# run basic tests
+test-basic: test-unit test-doc
+
+# run cargo unit tests
+test-unit:
+    cargo test --lib --bins --all --all-targets --all-features --no-fail-fast
+
+# run cargo doc tests
+test-doc:
+    cargo test --doc
 
 # run permutated feature compilation tests
 test-features:
@@ -47,8 +53,8 @@ test-features:
 test-musl:
     {{ cwd }}/scripts/musl_test.sh
 
-# run oci integration tests
-oci-tests: 
+# run oci integration tests through runtime-tools
+test-oci:
     {{ cwd }}/scripts/oci_integration_tests.sh {{ cwd }}
 
 # run rust oci integration tests
@@ -58,6 +64,11 @@ rust-oci-tests: youki-release runtimetest rust-oci-tests-bin
 # validate rust oci integration tests on runc
 validate-rust-oci-runc: runtimetest rust-oci-tests-bin
     {{ cwd }}/scripts/rust_integration_tests.sh runc
+
+# test podman rootless works with youki
+test-rootless-podman:
+    {{ cwd }}/tests/rootless-tests/run.sh {{ cwd }}/youki
+
 
 # run containerd integration tests
 containerd-test: youki-dev
@@ -145,7 +156,6 @@ ci-prepare:
             apt-get install -y \
                 pkg-config \
                 libsystemd-dev \
-                libdbus-glib-1-dev \
                 build-essential \
                 libelf-dev \
                 libseccomp-dev \
@@ -178,3 +188,8 @@ ci-musl-prepare: ci-prepare
 
     echo "Unknown system. The CI is only configured for Ubuntu. You will need to forge your own path. Good luck!"
     exit 1
+
+version-up version:
+    git grep -l "^version = .* # MARK: Version" | xargs sed -i 's/version = "[0-9]\.[0-9]\.[0-9]" # MARK: Version/version = "{{version}}" # MARK: Version/g'
+    sed -i s/_[0-9]_[0-9]_[0-9]_/_{{ replace(version, '.', '_') }}_/g  docs/src/user/basic_setup.md
+    sed -i 's/[0-9]\.[0-9]\.[0-9]/{{version}}/g'  docs/src/user/basic_setup.md

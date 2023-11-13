@@ -20,7 +20,6 @@ To compile and run, Youki itself depends on some underlying libraries being inst
 $ sudo apt-get install    \
       pkg-config          \
       libsystemd-dev      \
-      libdbus-glib-1-dev  \
       build-essential     \
       libelf-dev          \
       libseccomp-dev      \
@@ -34,7 +33,6 @@ $ sudo apt-get install    \
 $ sudo dnf install          \
       pkg-config            \
       systemd-devel         \
-      dbus-devel            \
       elfutils-libelf-devel \
       libseccomp-devel      \
       clang-devel           \
@@ -49,11 +47,11 @@ Install from the GitHub release.
 Note that this way also requires the aforementioned installation.
 
 ```console
-$ wget https://github.com/containers/youki/releases/download/v0.2.0/youki_0_2_0_linux.tar.gz
-$ tar -zxvf youki_0_2_0_linux.tar.gz youki_0_2_0_linux/youki-0.2.0/youki
+$ wget https://github.com/containers/youki/releases/download/v0.3.0/youki_0_3_0_linux.tar.gz
+$ tar -zxvf youki_0_3_0_linux.tar.gz youki_0_3_0_linux/youki-0.3.0/youki
 # Maybe you need root privileges.
-$ mv youki_0_2_0_linux/youki-0.2.0/youki /usr/local/bin/youki
-$ rm -rf youki_0_2_0_linux.tar.gz youki_0_2_0_linux
+$ mv youki_0_3_0_linux/youki-0.3.0/youki /usr/local/bin/youki
+$ rm -rf youki_0_3_0_linux.tar.gz youki_0_3_0_linux
 ```
 
 ## Getting the source

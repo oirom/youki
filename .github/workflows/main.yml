@@ -66,9 +66,7 @@ jobs:
       - name: Install requirements
         run: sudo env PATH=$PATH just ci-prepare
       - name: Run tests
-        run: |
-          export LD_LIBRARY_PATH=$HOME/.wasmedge/lib
-          cd ./crates && cargo test --all --all-features --no-fail-fast
+        run: just test-basic
       - name: Run feature tests
         run: just test-features
 
@@ -123,7 +121,7 @@ jobs:
         run: |
           cargo llvm-cov clean --workspace
           cargo llvm-cov --no-report
-          cargo llvm-cov --no-run --lcov --ignore-filename-regex "libcgroups/src/systemd/dbus/systemd_api.rs" --output-path ./coverage.lcov
+          cargo llvm-cov --no-run --lcov --output-path ./coverage.lcov
       - name: Upload Youki Code Coverage Results
         uses: codecov/codecov-action@v3
         with:
