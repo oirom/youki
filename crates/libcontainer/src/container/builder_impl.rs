@@ -5,7 +5,7 @@ use crate::{
     notify_socket::NotifyListener,
     process::{
         self,
-        args::{Sender, ContainerArgs, ContainerType},
+        args::{ContainerArgs, ContainerType},
         intel_rdt::delete_resctrl_subdirectory,
     },
     syscall::syscall::SyscallType,
@@ -140,7 +140,7 @@ impl ContainerBuilderImpl {
             syscall: self.syscall,
             spec: Rc::clone(&self.spec),
             rootfs: self.rootfs.to_owned(),
-            console_socket: Some(Sender(unsafe { OwnedFd::from_raw_fd(self.console_socket.unwrap()) } )),
+            console_socket: self.console_socket,
             notify_listener,
             preserve_fds: self.preserve_fds,
             container: self.container.to_owned(),

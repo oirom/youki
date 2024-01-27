@@ -34,7 +34,7 @@ pub struct ContainerArgs {
     /// Root filesystem of the container
     pub rootfs: PathBuf,
     /// Socket to communicate the file descriptor of the ptty
-    pub console_socket: Option<Sender>,
+    pub console_socket: Option<RawFd>,
     /// The Unix Domain Socket to communicate container start
     pub notify_listener: NotifyListener,
     /// File descriptors preserved/passed to the container init process.

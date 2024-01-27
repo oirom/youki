@@ -299,8 +299,8 @@ pub fn container_init_process(
     setup_scheduler(proc.scheduler())?;
 
     // set up tty if specified
-    if let Some(csocketfd) = &args.console_socket {
-        tty::setup_console(&csocketfd.0.as_raw_fd()).map_err(|err| {
+    if let Some(csocketfd) = args.console_socket {
+        tty::setup_console(&csocketfd).map_err(|err| {
             tracing::error!(?err, "failed to set up tty");
             InitProcessError::Tty(err)
         })?;
