@@ -1,6 +1,6 @@
 use libcgroups::common::CgroupConfig;
 use oci_spec::runtime::Spec;
-use std::os::unix::prelude::RawFd;
+use std::os::unix::prelude::{RawFd, OwnedFd};
 use std::path::PathBuf;
 use std::rc::Rc;
 
@@ -15,6 +15,14 @@ pub enum ContainerType {
     TenantContainer { exec_notify_fd: RawFd },
 }
 
+pub struct Sender(pub OwnedFd);
+
+impl Clone for Sender {
+  fn clone(&self) -> Self {
+    Sender(self.0.try_clone().unwrap())
+  }
+}
+
 #[derive(Clone)]
 pub struct ContainerArgs {
     /// Indicates if an init or a tenant container should be created
@@ -26,7 +34,7 @@ pub struct ContainerArgs {
     /// Root filesystem of the container
     pub rootfs: PathBuf,
     /// Socket to communicate the file descriptor of the ptty
-    pub console_socket: Option<RawFd>,
+    pub console_socket: Option<Sender>,
     /// The Unix Domain Socket to communicate container start
     pub notify_listener: NotifyListener,
     /// File descriptors preserved/passed to the container init process.

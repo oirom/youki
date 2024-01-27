@@ -15,7 +15,7 @@ pub enum BpfError {
 #[cfg_attr(test, automock)]
 pub mod prog {
     use super::ProgramInfo;
-    use std::os::unix::io::RawFd;
+    use std::os::unix::io::OwnedFd;
     use std::ptr;
 
     use libbpf_sys::{bpf_insn, BPF_CGROUP_DEVICE, BPF_F_ALLOW_MULTI, BPF_PROG_TYPE_CGROUP_DEVICE};
@@ -38,7 +38,7 @@ pub mod prog {
         bpf_prog_attach, bpf_prog_detach2, bpf_prog_get_fd_by_id, bpf_prog_load, bpf_prog_query,
     };
 
-    pub fn load(license: &str, insns: &[u8]) -> Result<RawFd, super::BpfError> {
+    pub fn load(license: &str, insns: &[u8]) -> Result<OwnedFd, super::BpfError> {
         let insns_cnt = insns.len() / std::mem::size_of::<bpf_insn>();
         let insns = insns as *const _ as *const bpf_insn;
         let mut opts = libbpf_sys::bpf_prog_load_opts {
@@ -66,7 +66,7 @@ pub mod prog {
     }
 
     /// Given a fd for a cgroup, collect the programs associated with it
-    pub fn query(cgroup_fd: RawFd) -> Result<Vec<ProgramInfo>, super::BpfError> {
+    pub fn query(cgroup_fd: OwnedFd) -> Result<Vec<ProgramInfo>, super::BpfError> {
         let mut prog_ids: Vec<u32> = vec![0_u32; 64];
         let mut attach_flags = 0_u32;
         for _ in 0..10 {
@@ -117,7 +117,7 @@ pub mod prog {
         Ok(prog_fds)
     }
 
-    pub fn detach2(prog_fd: RawFd, cgroup_fd: RawFd) -> Result<(), super::BpfError> {
+    pub fn detach2(prog_fd: OwnedFd, cgroup_fd: OwnedFd) -> Result<(), super::BpfError> {
         #[allow(unused_unsafe)]
         let ret = unsafe { bpf_prog_detach2(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE) };
         if ret != 0 {
@@ -126,7 +126,7 @@ pub mod prog {
         Ok(())
     }
 
-    pub fn attach(prog_fd: RawFd, cgroup_fd: RawFd) -> Result<(), super::BpfError> {
+    pub fn attach(prog_fd: OwnedFd, cgroup_fd: OwnedFd) -> Result<(), super::BpfError> {
         #[allow(unused_unsafe)]
         let ret =
             unsafe { bpf_prog_attach(prog_fd, cgroup_fd, BPF_CGROUP_DEVICE, BPF_F_ALLOW_MULTI) };

@@ -121,7 +121,7 @@ mod tests {
     use serial_test::serial;
 
     use oci_spec::runtime::{LinuxDeviceCgroupBuilder, LinuxDeviceType};
-    use std::os::unix::io::RawFd;
+    use std::os::unix::io::OwnedFd;
 
     use bpf::mock_prog;
 
@@ -134,7 +134,7 @@ mod tests {
             .typ(LinuxDeviceType::A)
             .build()
             .unwrap();
-        let file_descriptor: RawFd = 6;
+        let file_descriptor: OwnedFd = 6;
 
         // expect
         let bump_memlock_rlimit = mock_prog::bump_memlock_rlimit_context();
@@ -163,7 +163,7 @@ mod tests {
             .typ(LinuxDeviceType::A)
             .build()
             .unwrap();
-        let file_descriptor: RawFd = 6;
+        let file_descriptor: OwnedFd = 6;
         let existing_program_1 = bpf::ProgramInfo {
             id: u32::default(),
             fd: i32::default(),

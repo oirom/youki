@@ -1,7 +1,7 @@
 use crate::channel::{channel, Receiver, Sender};
 use crate::process::message::Message;
 use nix::unistd::Pid;
-use std::os::unix::prelude::{AsRawFd, RawFd};
+use std::os::unix::prelude::{AsRawFd, RawFd, OwnedFd};
 
 #[derive(Debug, thiserror::Error)]
 pub enum ChannelError {
@@ -55,7 +55,7 @@ impl MainSender {
         Ok(())
     }
 
-    pub fn seccomp_notify_request(&mut self, fd: RawFd) -> Result<(), ChannelError> {
+    pub fn seccomp_notify_request(&mut self, fd: OwnedFd) -> Result<(), ChannelError> {
         self.sender
             .send_fds(Message::SeccompNotify, &[fd.as_raw_fd()])?;
 

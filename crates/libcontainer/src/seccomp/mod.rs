@@ -10,7 +10,8 @@ use oci_spec::runtime::LinuxSeccompAction;
 use oci_spec::runtime::LinuxSeccompFilterFlag;
 use oci_spec::runtime::LinuxSeccompOperator;
 use std::num::TryFromIntError;
-use std::os::unix::io;
+use std::os::fd::OwnedFd;
+use std::os::fd::FromRawFd;
 
 #[derive(Debug, thiserror::Error)]
 pub enum SeccompError {
@@ -142,7 +143,7 @@ fn check_seccomp(seccomp: &LinuxSeccomp) -> Result<()> {
 }
 
 #[tracing::instrument(level = "trace", skip(seccomp))]
-pub fn initialize_seccomp(seccomp: &LinuxSeccomp) -> Result<Option<io::RawFd>> {
+pub fn initialize_seccomp(seccomp: &LinuxSeccomp) -> Result<Option<OwnedFd>> {
     check_seccomp(seccomp)?;
 
     tracing::trace!(default_action = ?seccomp.default_action(), errno = ?seccomp.default_errno_ret(), "initializing seccomp");
@@ -274,7 +275,7 @@ pub fn initialize_seccomp(seccomp: &LinuxSeccomp) -> Result<Option<io::RawFd>> {
         None
     };
 
-    Ok(fd)
+    Ok(Some(unsafe { OwnedFd::from_raw_fd(fd.unwrap()) }))
 }
 
 pub fn is_notify(seccomp: &LinuxSeccomp) -> bool {

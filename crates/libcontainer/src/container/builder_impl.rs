@@ -5,7 +5,7 @@ use crate::{
     notify_socket::NotifyListener,
     process::{
         self,
-        args::{ContainerArgs, ContainerType},
+        args::{Sender, ContainerArgs, ContainerType},
         intel_rdt::delete_resctrl_subdirectory,
     },
     syscall::syscall::SyscallType,
@@ -16,7 +16,7 @@ use crate::{
 use libcgroups::common::CgroupManager;
 use nix::unistd::Pid;
 use oci_spec::runtime::Spec;
-use std::{fs, io::Write, os::unix::prelude::RawFd, path::PathBuf, rc::Rc};
+use std::{fs, io::Write, os::{fd::{FromRawFd, OwnedFd}, unix::prelude::RawFd}, path::PathBuf, rc::Rc};
 
 pub(super) struct ContainerBuilderImpl {
     /// Flag indicating if an init or a tenant container should be created
@@ -140,7 +140,7 @@ impl ContainerBuilderImpl {
             syscall: self.syscall,
             spec: Rc::clone(&self.spec),
             rootfs: self.rootfs.to_owned(),
-            console_socket: self.console_socket,
+            console_socket: Some(Sender(unsafe { OwnedFd::from_raw_fd(self.console_socket.unwrap()) } )),
             notify_listener,
             preserve_fds: self.preserve_fds,
             container: self.container.to_owned(),

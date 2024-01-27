@@ -24,6 +24,7 @@ use std::{
     env, fs,
     path::{Path, PathBuf},
 };
+use std::os::fd::OwnedFd;
 
 #[cfg(feature = "libseccomp")]
 use crate::seccomp;
@@ -298,8 +299,8 @@ pub fn container_init_process(
     setup_scheduler(proc.scheduler())?;
 
     // set up tty if specified
-    if let Some(csocketfd) = args.console_socket {
-        tty::setup_console(&csocketfd).map_err(|err| {
+    if let Some(csocketfd) = &args.console_socket {
+        tty::setup_console(&csocketfd.0.as_raw_fd()).map_err(|err| {
             tracing::error!(?err, "failed to set up tty");
             InitProcessError::Tty(err)
         })?;
@@ -805,12 +806,12 @@ fn setup_scheduler(sc_op: &Option<Scheduler>) -> Result<()> {
 
 #[cfg(feature = "libseccomp")]
 fn sync_seccomp(
-    fd: Option<i32>,
+    fd: Option<OwnedFd>,
     main_sender: &mut channel::MainSender,
     init_receiver: &mut channel::InitReceiver,
 ) -> Result<()> {
     if let Some(fd) = fd {
-        tracing::debug!("init process sync seccomp, notify fd: {}", fd);
+        tracing::debug!("init process sync seccomp, notify fd: {:?}", fd);
         main_sender.seccomp_notify_request(fd).map_err(|err| {
             tracing::error!(?err, "failed to send seccomp notify request");
             InitProcessError::Channel(err)
@@ -821,10 +822,6 @@ fn sync_seccomp(
                 tracing::error!(?err, "failed to wait for seccomp request done");
                 InitProcessError::Channel(err)
             })?;
-        // Once we are sure the seccomp notify fd is sent, we can safely close
-        // it. The fd is now duplicated to the main process and sent to seccomp
-        // listener.
-        let _ = unistd::close(fd);
     }
 
     Ok(())
@@ -993,8 +990,9 @@ mod tests {
             assert!(init_sender.seccomp_notify_done().is_ok());
         });
 
+        use std::os::fd::FromRawFd;
         // sync_seccomp close the fd,
-        sync_seccomp(Some(fd), &mut main_sender, &mut init_receiver)?;
+        sync_seccomp(Some(unsafe { OwnedFd::from_raw_fd(fd) }), &mut main_sender, &mut init_receiver)?;
         // so expecting close the same fd again will causing EBADF error.
         assert_eq!(nix::errno::Errno::EBADF, unistd::close(fd).unwrap_err());
         assert!(th.join().is_ok());
