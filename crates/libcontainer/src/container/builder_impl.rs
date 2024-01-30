@@ -5,7 +5,7 @@ use crate::{
     notify_socket::NotifyListener,
     process::{
         self,
-        args::{ContainerArgs, ContainerType},
+        args::{MyOwnedFd, ContainerArgs, ContainerType},
         intel_rdt::delete_resctrl_subdirectory,
     },
     syscall::syscall::SyscallType,
@@ -35,7 +35,7 @@ pub(super) struct ContainerBuilderImpl {
     /// container process to the higher level runtime
     pub pid_file: Option<PathBuf>,
     /// Socket to communicate the file descriptor of the ptty
-    pub console_socket: Option<RawFd>,
+    pub console_socket: Option<MyOwnedFd>,
     /// Options for new user namespace
     pub user_ns_config: Option<UserNamespaceConfig>,
     /// Path to the Unix Domain Socket to communicate container start
@@ -140,7 +140,7 @@ impl ContainerBuilderImpl {
             syscall: self.syscall,
             spec: Rc::clone(&self.spec),
             rootfs: self.rootfs.to_owned(),
-            console_socket: self.console_socket,
+            console_socket: self.console_socket.clone(),
             notify_listener,
             preserve_fds: self.preserve_fds,
             container: self.container.to_owned(),

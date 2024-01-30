@@ -1,8 +1,10 @@
 use libcgroups::common::CgroupConfig;
 use oci_spec::runtime::Spec;
+use std::os::fd::{AsRawFd, FromRawFd};
 use std::os::unix::prelude::{RawFd, OwnedFd};
 use std::path::PathBuf;
 use std::rc::Rc;
+use std::io::Result;
 
 use crate::container::Container;
 use crate::notify_socket::NotifyListener;
@@ -15,12 +17,18 @@ pub enum ContainerType {
     TenantContainer { exec_notify_fd: RawFd },
 }
 
-pub struct Sender(pub OwnedFd);
+pub struct MyOwnedFd(pub OwnedFd);
 
-impl Clone for Sender {
-  fn clone(&self) -> Self {
-    Sender(self.0.try_clone().unwrap())
-  }
+impl Clone for MyOwnedFd {
+    fn clone(&self) -> Self {
+        Self(unsafe { OwnedFd::from_raw_fd(self.0.as_raw_fd()) })
+    }
+}
+
+impl MyOwnedFd {
+    fn try_clone(&self) -> Result<Self> {
+        Ok(Self(OwnedFd::try_clone(&self.0)?))
+    }
 }
 
 #[derive(Clone)]
@@ -34,7 +42,8 @@ pub struct ContainerArgs {
     /// Root filesystem of the container
     pub rootfs: PathBuf,
     /// Socket to communicate the file descriptor of the ptty
-    pub console_socket: Option<RawFd>,
+    // pub console_socket: Option<RawFd>,
+    pub console_socket: Option<MyOwnedFd>,
     /// The Unix Domain Socket to communicate container start
     pub notify_listener: NotifyListener,
     /// File descriptors preserved/passed to the container init process.

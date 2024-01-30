@@ -1,9 +1,7 @@
 use nix::unistd;
 use oci_spec::runtime::Spec;
 use std::{
-    fs,
-    path::{Path, PathBuf},
-    rc::Rc,
+    fs, os::fd::{FromRawFd, OwnedFd}, path::{Path, PathBuf}, rc::Rc
 };
 use user_ns::UserNamespaceConfig;
 
@@ -12,7 +10,7 @@ use crate::{
     config::YoukiConfig,
     error::{ErrInvalidSpec, LibcontainerError, MissingSpecError},
     notify_socket::NOTIFY_FILE,
-    process::args::ContainerType,
+    process::args::{MyOwnedFd, ContainerType},
     tty, user_ns, utils,
 };
 
@@ -76,12 +74,12 @@ impl InitContainerBuilder {
 
         // if socket file path is given in commandline options,
         // get file descriptors of console socket
-        let csocketfd = if let Some(console_socket) = &self.base.console_socket {
-            Some(tty::setup_console_socket(
+        let csocketfd: Option<MyOwnedFd> = if let Some(console_socket) = &self.base.console_socket {
+            Some(MyOwnedFd(unsafe { OwnedFd::from_raw_fd(tty::setup_console_socket(
                 &container_dir,
                 console_socket,
                 "console-socket",
-            )?)
+            )?)}))
         } else {
             None
         };

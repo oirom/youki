@@ -8,6 +8,7 @@ use oci_spec::runtime::{
 };
 use procfs::process::Namespace;
 
+use std::os::fd::{FromRawFd, OwnedFd};
 use std::rc::Rc;
 use std::{
     collections::HashMap,
@@ -21,7 +22,7 @@ use std::{
 };
 
 use crate::error::{ErrInvalidSpec, LibcontainerError, MissingSpecError};
-use crate::process::args::ContainerType;
+use crate::process::args::{MyOwnedFd, ContainerType};
 use crate::{capabilities::CapabilityExt, container::builder_impl::ContainerBuilderImpl};
 use crate::{notify_socket::NotifySocket, tty, user_ns::UserNamespaceConfig, utils};
 
@@ -486,14 +487,14 @@ impl TenantContainerBuilder {
         Ok(socket_path)
     }
 
-    fn setup_tty_socket(&self, container_dir: &Path) -> Result<Option<RawFd>, LibcontainerError> {
+    fn setup_tty_socket(&self, container_dir: &Path) -> Result<Option<MyOwnedFd>, LibcontainerError> {
         let tty_name = Self::generate_name(container_dir, TENANT_TTY);
         let csocketfd = if let Some(console_socket) = &self.base.console_socket {
-            Some(tty::setup_console_socket(
+            Some(MyOwnedFd(unsafe { OwnedFd::from_raw_fd(tty::setup_console_socket(
                 container_dir,
                 console_socket,
                 &tty_name,
-            )?)
+            )?)}))
         } else {
             None
         };
