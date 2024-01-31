@@ -136,7 +136,7 @@ impl ContainerBuilderImpl {
         // therefore we will have to move all the variable by value. Since self
         // is a shared reference, we have to clone these variables here.
         let container_args = ContainerArgs {
-            container_type: self.container_type,
+            container_type: self.container_type.clone(),
             syscall: self.syscall,
             spec: Rc::clone(&self.spec),
             rootfs: self.rootfs.to_owned(),

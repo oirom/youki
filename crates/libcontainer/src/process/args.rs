@@ -11,12 +11,8 @@ use crate::notify_socket::NotifyListener;
 use crate::syscall::syscall::SyscallType;
 use crate::user_ns::UserNamespaceConfig;
 use crate::workload::Executor;
-#[derive(Debug, Copy, Clone)]
-pub enum ContainerType {
-    InitContainer,
-    TenantContainer { exec_notify_fd: RawFd },
-}
 
+#[derive(Debug)]
 pub struct MyOwnedFd(pub OwnedFd);
 
 impl Clone for MyOwnedFd {
@@ -31,6 +27,12 @@ impl MyOwnedFd {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum ContainerType {
+    InitContainer,
+    TenantContainer { exec_notify_fd: MyOwnedFd },
+}
+
 #[derive(Clone)]
 pub struct ContainerArgs {
     /// Indicates if an init or a tenant container should be created
@@ -42,7 +44,6 @@ pub struct ContainerArgs {
     /// Root filesystem of the container
     pub rootfs: PathBuf,
     /// Socket to communicate the file descriptor of the ptty
-    // pub console_socket: Option<RawFd>,
     pub console_socket: Option<MyOwnedFd>,
     /// The Unix Domain Socket to communicate container start
     pub notify_listener: NotifyListener,

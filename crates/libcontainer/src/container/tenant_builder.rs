@@ -127,7 +127,7 @@ impl TenantContainerBuilder {
 
         let mut builder_impl = ContainerBuilderImpl {
             container_type: ContainerType::TenantContainer {
-                exec_notify_fd: write_end,
+                exec_notify_fd: MyOwnedFd(unsafe { OwnedFd::from_raw_fd(write_end) }),
             },
             syscall: self.base.syscall,
             container_id: self.base.container_id,

@@ -1,3 +1,5 @@
+use std::os::fd::AsRawFd;
+
 use crate::error::MissingSpecError;
 use crate::{namespaces::Namespaces, process::channel, process::fork};
 use libcgroups::common::CgroupManager;
@@ -122,13 +124,13 @@ pub fn container_intermediate_process(
             match container_init_process(&args, &mut main_sender, &mut init_receiver) {
                 Ok(_) => 0,
                 Err(e) => {
-                    if let ContainerType::TenantContainer { exec_notify_fd } = args.container_type {
+                    if let ContainerType::TenantContainer { exec_notify_fd } = &args.container_type {
                         let buf = format!("{e}");
-                        if let Err(err) = write(exec_notify_fd, buf.as_bytes()) {
+                        if let Err(err) = write(exec_notify_fd.0.as_raw_fd(), buf.as_bytes()) {
                             tracing::error!(?err, "failed to write to exec notify fd");
                             return -1;
                         }
-                        if let Err(err) = close(exec_notify_fd) {
+                        if let Err(err) = close(exec_notify_fd.0.as_raw_fd()) {
                             tracing::error!(?err, "failed to close exec notify fd");
                             return -1;
                         }
@@ -155,8 +157,8 @@ pub fn container_intermediate_process(
     })?;
 
     // Close the exec_notify_fd in this process
-    if let ContainerType::TenantContainer { exec_notify_fd } = args.container_type {
-        close(exec_notify_fd).map_err(|err| {
+    if let ContainerType::TenantContainer { exec_notify_fd } = &args.container_type {
+        close(exec_notify_fd.0.as_raw_fd()).map_err(|err| {
             tracing::error!("failed to close exec notify fd: {}", err);
             IntermediateProcessError::ExecNotify(err)
         })?;
