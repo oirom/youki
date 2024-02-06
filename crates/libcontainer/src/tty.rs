@@ -5,6 +5,7 @@ use nix::sys::socket::{self, UnixAddr};
 use nix::unistd::close;
 use nix::unistd::dup2;
 use std::io::IoSlice;
+use std::os::fd::{FromRawFd, OwnedFd};
 use std::os::unix::fs::symlink;
 use std::os::unix::io::AsRawFd;
 use std::os::unix::prelude::RawFd;
@@ -135,14 +136,14 @@ pub fn setup_console(console_fd: &RawFd) -> Result<()> {
     if unsafe { libc::ioctl(slave.as_raw_fd(), libc::TIOCSCTTY) } < 0 {
         tracing::warn!("could not TIOCSCTTY");
     };
-    let slave = slave.as_raw_fd();
+    let slave = unsafe { OwnedFd::from_raw_fd(slave.as_raw_fd()) };
     connect_stdio(&slave, &slave, &slave)?;
     close(console_fd.as_raw_fd()).map_err(|err| TTYError::CloseConsoleSocket { source: err })?;
 
     Ok(())
 }
 
-fn connect_stdio(stdin: &RawFd, stdout: &RawFd, stderr: &RawFd) -> Result<()> {
+fn connect_stdio(stdin: &OwnedFd, stdout: &OwnedFd, stderr: &OwnedFd) -> Result<()> {
     dup2(stdin.as_raw_fd(), StdIO::Stdin.into()).map_err(|err| TTYError::ConnectStdIO {
         source: err,
         stdio: StdIO::Stdin,
