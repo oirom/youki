@@ -8,7 +8,6 @@ use std::io::IoSlice;
 use std::os::fd::{FromRawFd, OwnedFd};
 use std::os::unix::fs::symlink;
 use std::os::unix::io::AsRawFd;
-use std::os::unix::prelude::RawFd;
 use std::path::{Path, PathBuf};
 
 #[derive(Debug)]
@@ -75,7 +74,7 @@ pub fn setup_console_socket(
     container_dir: &Path,
     console_socket_path: &Path,
     socket_name: &str,
-) -> Result<RawFd> {
+) -> Result<OwnedFd> {
     let linked = container_dir.join(socket_name);
     symlink(console_socket_path, &linked).map_err(|err| TTYError::Symlink {
         source: err,
@@ -106,10 +105,10 @@ pub fn setup_console_socket(
         })?,
         Ok(()) => csocketfd.as_raw_fd(),
     };
-    Ok(csocketfd)
+    Ok(unsafe { OwnedFd::from_raw_fd(csocketfd) } )
 }
 
-pub fn setup_console(console_fd: &RawFd) -> Result<()> {
+pub fn setup_console(console_fd: &OwnedFd) -> Result<()> {
     // You can also access pty master, but it is better to use the API.
     // ref. https://github.com/containerd/containerd/blob/261c107ffc4ff681bc73988f64e3f60c32233b37/vendor/github.com/containerd/go-runc/console.go#L139-L154
     let openpty_result = nix::pty::openpty(None, None)

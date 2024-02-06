@@ -489,11 +489,11 @@ impl TenantContainerBuilder {
     fn setup_tty_socket(&self, container_dir: &Path) -> Result<Option<MyOwnedFd>, LibcontainerError> {
         let tty_name = Self::generate_name(container_dir, TENANT_TTY);
         let csocketfd = if let Some(console_socket) = &self.base.console_socket {
-            Some(MyOwnedFd(unsafe { OwnedFd::from_raw_fd(tty::setup_console_socket(
+            Some(MyOwnedFd(tty::setup_console_socket(
                 container_dir,
                 console_socket,
                 &tty_name,
-            )?)}))
+            )?))
         } else {
             None
         };

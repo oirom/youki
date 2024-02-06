@@ -1,7 +1,7 @@
 use nix::unistd;
 use oci_spec::runtime::Spec;
 use std::{
-    fs, os::fd::{FromRawFd, OwnedFd}, path::{Path, PathBuf}, rc::Rc
+    fs, path::{Path, PathBuf}, rc::Rc
 };
 use user_ns::UserNamespaceConfig;
 
@@ -75,11 +75,11 @@ impl InitContainerBuilder {
         // if socket file path is given in commandline options,
         // get file descriptors of console socket
         let csocketfd: Option<MyOwnedFd> = if let Some(console_socket) = &self.base.console_socket {
-            Some(MyOwnedFd(unsafe { OwnedFd::from_raw_fd(tty::setup_console_socket(
+            Some(MyOwnedFd(tty::setup_console_socket(
                 &container_dir,
                 console_socket,
                 "console-socket",
-            )?)}))
+            )?))
         } else {
             None
         };
