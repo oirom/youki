@@ -12,10 +12,9 @@ use nix::{
 use oci_spec::runtime::LinuxRlimit;
 use std::ffi::{CStr, CString, OsStr};
 use std::fs;
-use std::os::fd::BorrowedFd;
+use std::os::fd::{AsRawFd, BorrowedFd, OwnedFd};
 use std::os::unix::ffi::OsStrExt;
 use std::os::unix::fs::symlink;
-use std::os::unix::io::RawFd;
 use std::str::FromStr;
 use std::sync::Arc;
 use std::{any::Any, mem, path::Path, ptr};
@@ -541,7 +540,7 @@ impl Syscall for LinuxSyscall {
 
     fn mount_setattr(
         &self,
-        dirfd: RawFd,
+        dirfd: OwnedFd,
         pathname: &Path,
         flags: u32,
         mount_attr: &MountAttr,
@@ -563,7 +562,7 @@ impl Syscall for LinuxSyscall {
         match unsafe {
             libc::syscall(
                 libc::SYS_mount_setattr,
-                dirfd,
+                dirfd.as_raw_fd(),
                 path_c_string.as_ptr(),
                 flags,
                 mount_attr as *const MountAttr,

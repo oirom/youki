@@ -16,7 +16,7 @@ use crate::{
 use libcgroups::common::CgroupManager;
 use nix::unistd::Pid;
 use oci_spec::runtime::Spec;
-use std::{fs, io::Write, os::{fd::{FromRawFd, OwnedFd}, unix::prelude::RawFd}, path::PathBuf, rc::Rc};
+use std::{fs, io::Write, path::PathBuf, rc::Rc};
 
 pub(super) struct ContainerBuilderImpl {
     /// Flag indicating if an init or a tenant container should be created

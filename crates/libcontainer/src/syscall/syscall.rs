@@ -9,7 +9,7 @@ use nix::{
     sys::stat::{Mode, SFlag},
     unistd::{Gid, Uid},
 };
-use std::{any::Any, ffi::OsStr, path::Path, sync::Arc};
+use std::{any::Any, ffi::OsStr, os::fd::OwnedFd, path::Path, sync::Arc};
 
 use oci_spec::runtime::LinuxRlimit;
 
@@ -48,7 +48,7 @@ pub trait Syscall {
     fn close_range(&self, preserve_fds: i32) -> Result<()>;
     fn mount_setattr(
         &self,
-        dirfd: i32,
+        dirfd: OwnedFd,
         pathname: &Path,
         flags: u32,
         mount_attr: &MountAttr,

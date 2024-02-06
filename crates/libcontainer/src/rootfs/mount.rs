@@ -15,7 +15,7 @@ use nix::{dir::Dir, errno::Errno, fcntl::OFlag, mount::MsFlags, sys::stat::Mode,
 use oci_spec::runtime::{Mount as SpecMount, MountBuilder as SpecMountBuilder};
 use procfs::process::{MountInfo, MountOptFields, Process};
 use safe_path;
-use std::fs::{canonicalize, create_dir_all, OpenOptions};
+use std::{fs::{canonicalize, create_dir_all, OpenOptions}, os::fd::{FromRawFd, OwnedFd}};
 use std::mem;
 use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
@@ -592,7 +592,7 @@ impl Mount {
             let open_dir = Dir::open(dest, OFlag::O_DIRECTORY, Mode::empty())?;
             let dir_fd_pathbuf = PathBuf::from(format!("/proc/self/fd/{}", open_dir.as_raw_fd()));
             self.syscall.mount_setattr(
-                -1,
+                unsafe { OwnedFd::from_raw_fd(-1) },
                 &dir_fd_pathbuf,
                 linux::AT_RECURSIVE,
                 mount_attr,

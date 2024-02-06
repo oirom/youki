@@ -1,7 +1,7 @@
 use libcgroups::common::CgroupConfig;
 use oci_spec::runtime::Spec;
 use std::os::fd::{AsRawFd, FromRawFd};
-use std::os::unix::prelude::{RawFd, OwnedFd};
+use std::os::unix::prelude::OwnedFd;
 use std::path::PathBuf;
 use std::rc::Rc;
 use std::io::Result;

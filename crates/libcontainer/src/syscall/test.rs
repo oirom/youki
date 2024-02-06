@@ -1,10 +1,5 @@
 use std::{
-    any::Any,
-    cell::{Ref, RefCell, RefMut},
-    collections::HashMap,
-    ffi::{OsStr, OsString},
-    path::{Path, PathBuf},
-    sync::Arc,
+    any::Any, cell::{Ref, RefCell, RefMut}, collections::HashMap, ffi::{OsStr, OsString}, os::fd::OwnedFd, path::{Path, PathBuf}, sync::Arc
 };
 
 use caps::{CapSet, CapsHashSet};
@@ -249,7 +244,7 @@ impl Syscall for TestHelperSyscall {
 
     fn mount_setattr(
         &self,
-        _: i32,
+        _: OwnedFd,
         _: &Path,
         _: u32,
         _: &linux::MountAttr,

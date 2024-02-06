@@ -16,7 +16,6 @@ use std::{
     ffi::{OsStr, OsString},
     fs,
     io::BufReader,
-    os::unix::prelude::RawFd,
     path::{Path, PathBuf},
     str::FromStr,
 };
