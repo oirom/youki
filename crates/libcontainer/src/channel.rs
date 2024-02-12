@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     io::{IoSlice, IoSliceMut},
     marker::PhantomData,
-    os::{fd::AsRawFd, unix::prelude::RawFd},
+    os::{fd::{AsRawFd, OwnedFd}, unix::prelude::RawFd},
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -37,10 +37,14 @@ where
     fn send_iovec(
         &mut self,
         iov: &[IoSlice],
-        fds: Option<&[RawFd]>,
+        fds: Option<&[OwnedFd]>,
     ) -> Result<usize, ChannelError> {
+        let fake_fds: Vec<i32> = fds
+            .map(|fds| fds.iter().map(|fd| fd.as_raw_fd()).collect())
+            .unwrap_or_default();
+        let fake_fds_slice: &[i32] = &fake_fds;
         let cmsgs = if let Some(fds) = fds {
-            vec![socket::ControlMessage::ScmRights(fds)]
+            vec![socket::ControlMessage::ScmRights(fake_fds_slice)]
         } else {
             vec![]
         };
@@ -51,7 +55,7 @@ where
     fn send_slice_with_len(
         &mut self,
         data: &[u8],
-        fds: Option<&[RawFd]>,
+        fds: Option<&[OwnedFd]>,
     ) -> Result<usize, ChannelError> {
         let len = data.len() as u64;
         // Here we prefix the length of the data onto the serialized data.
@@ -74,7 +78,7 @@ where
         Ok(())
     }
 
-    pub fn send_fds(&mut self, object: T, fds: &[RawFd]) -> Result<(), ChannelError> {
+    pub fn send_fds(&mut self, object: T, fds: &[OwnedFd]) -> Result<(), ChannelError> {
         let payload = serde_json::to_vec(&object)?;
         self.send_slice_with_len(&payload, Some(fds))?;
 
