@@ -10,8 +10,7 @@ use oci_spec::runtime::LinuxSeccompAction;
 use oci_spec::runtime::LinuxSeccompFilterFlag;
 use oci_spec::runtime::LinuxSeccompOperator;
 use std::num::TryFromIntError;
-use std::os::fd::OwnedFd;
-use std::os::fd::FromRawFd;
+use std::os::fd::{OwnedFd, FromRawFd};
 
 #[derive(Debug, thiserror::Error)]
 pub enum SeccompError {
@@ -268,14 +267,20 @@ pub fn initialize_seccomp(seccomp: &LinuxSeccomp) -> Result<Option<OwnedFd>> {
 
     let fd = if is_notify(seccomp) {
         Some(
-            ctx.get_notify_fd()
-                .map_err(|err| SeccompError::GetNotifyId { source: err })?,
+            match ctx.get_notify_fd() {
+                Ok(fd) => unsafe {
+                    OwnedFd::from_raw_fd(fd)
+                },
+                Err(err) => {
+                    Err(SeccompError::GetNotifyId { source: err })?
+                }
+            },
         )
     } else {
         None
     };
 
-    Ok(Some(unsafe { OwnedFd::from_raw_fd(fd.unwrap()) }))
+    Ok(fd)
 }
 
 pub fn is_notify(seccomp: &LinuxSeccomp) -> bool {

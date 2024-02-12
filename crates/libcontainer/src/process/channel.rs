@@ -57,7 +57,7 @@ impl MainSender {
 
     pub fn seccomp_notify_request(&mut self, fd: OwnedFd) -> Result<(), ChannelError> {
         self.sender
-            .send_fds(Message::SeccompNotify, &[fd.as_raw_fd()])?;
+            .send_fds(Message::SeccompNotify, &[fd])?;
 
         Ok(())
     }

@@ -120,7 +120,7 @@ mod tests {
     #[serial]
     fn test_sync_seccomp() -> Result<()> {
         use std::io::Read;
-        use std::os::unix::io::IntoRawFd;
+        use std::os::unix::io::OwnedFd;
         use std::os::unix::net::UnixListener;
         use std::thread;
 
@@ -159,7 +159,7 @@ mod tests {
             .unwrap();
         });
 
-        let fd = scmp_file.into_raw_fd();
+        let fd =  OwnedFd::from(scmp_file);
         assert!(main_sender.seccomp_notify_request(fd).is_ok());
 
         std::fs::remove_file(socket_path.clone())?;
