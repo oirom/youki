@@ -976,7 +976,6 @@ mod tests {
     #[serial]
     #[cfg(feature = "libseccomp")]
     fn test_sync_seccomp() -> Result<()> {
-        use std::os::unix::io::IntoRawFd;
         use std::thread;
 
         let tmp_file = tempfile::tempfile()?;
@@ -984,17 +983,14 @@ mod tests {
         let (mut main_sender, mut main_receiver) = channel::main_channel()?;
         let (mut init_sender, mut init_receiver) = channel::init_channel()?;
 
-        let fd = tmp_file.into_raw_fd();
+        let fd = OwnedFd::from(tmp_file);
         let th = thread::spawn(move || {
             assert!(main_receiver.wait_for_seccomp_request().is_ok());
             assert!(init_sender.seccomp_notify_done().is_ok());
         });
 
-        use std::os::fd::FromRawFd;
         // sync_seccomp close the fd,
-        sync_seccomp(Some(unsafe { OwnedFd::from_raw_fd(fd) }), &mut main_sender, &mut init_receiver)?;
-        // so expecting close the same fd again will causing EBADF error.
-        assert_eq!(nix::errno::Errno::EBADF, unistd::close(fd).unwrap_err());
+        assert!(sync_seccomp(Some(fd), &mut main_sender, &mut init_receiver).is_ok());
         assert!(th.join().is_ok());
         Ok(())
     }

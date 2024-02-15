@@ -39,12 +39,11 @@ where
         iov: &[IoSlice],
         fds: Option<&[OwnedFd]>,
     ) -> Result<usize, ChannelError> {
-        let fake_fds: Vec<i32> = fds
+        let raw_fds: Vec<i32> = fds
             .map(|fds| fds.iter().map(|fd| fd.as_raw_fd()).collect())
             .unwrap_or_default();
-        let fake_fds_slice: &[i32] = &fake_fds;
         let cmsgs = if let Some(fds) = fds {
-            vec![socket::ControlMessage::ScmRights(fake_fds_slice)]
+            vec![socket::ControlMessage::ScmRights(&raw_fds)]
         } else {
             vec![]
         };
